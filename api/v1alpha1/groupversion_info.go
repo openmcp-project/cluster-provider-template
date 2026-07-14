@@ -18,7 +18,7 @@ limitations under the License.
 // Package v1alpha1 contains API Schema definitions for the services v1alpha1 API group.
 // +kubebuilder:object:generate=true
 // opencontrolplane-gen:replace foo=KIND_LOWER
-// +groupName=foo.platform.open-control-plane.io
+// +groupName=foo.cluster.open-control-plane.io
 package v1alpha1
 
 import (
