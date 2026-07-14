@@ -74,7 +74,7 @@ func updateOpenMCPOperatorConfig(ctx context.Context, c klient.Client, name, nam
 		return fmt.Errorf("failed to list openmcp-operator pod by label selector: %w", err)
 	}
 	for _, p := range pods.Items {
-		c.Resources().Delete(ctx, p)
+		c.Resources().Delete(ctx, &p)
 	}
 	return nil
 }
