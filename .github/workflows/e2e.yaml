@@ -1,0 +1,64 @@
+name: E2E Tests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-e2e-platform-api:
+    name: Platform Service with Platform Cluster API
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install opencontrolplane-gen
+        run: |
+          go install github.com/openmcp-project/opencontrolplane-gen@v1.0.2
+
+      - name: E2E Platform API
+        run: |
+          task template:dev:e2e watch=platform
+
+  test-e2e-onboarding-api:
+    name: Platform Service with Onboarding Cluster API
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install opencontrolplane-gen
+        run: |
+          go install github.com/openmcp-project/opencontrolplane-gen@v1.0.2
+
+      - name: E2E Onboarding API
+        run: |
+          task template:dev:e2e watch=onboarding

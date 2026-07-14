@@ -1,0 +1,69 @@
+version: 3
+
+includes:
+  shared:
+    taskfile: hack/common/Taskfile_controller.yaml
+    flatten: true
+
+tasks:
+  dev:gen:
+    desc: "Execute the template for local development"
+    vars:
+      debug: '{{.debug | default "false"}}'
+      watch: '{{.watch | default "platform"}}'
+    env:
+      DEBUG: "{{ .debug }}"
+      KIND: "Example"
+      KIND_LOWER: "example"
+      SERVICE_NAME: "example"
+      WATCH: "{{ lower .watch }}"
+    cmds:
+      - go generate ./...
+
+  dev:img:
+    desc: "Build image for current platform and tag for testing"
+    cmds:
+      - task: dev:gen
+        vars:
+          watch: "{{.watch}}"
+      - task: build:img:build
+      - docker tag ghcr.io/openmcp-project/images/{{.COMPONENTS}}:{{.VERSION}}-linux-{{ARCH}} ghcr.io/openmcp-project/images/platform-service-example:{{.VERSION}}
+    vars:
+      VERSION:
+        sh: $COMMON_SCRIPT_DIR/get-version.sh
+      ARCH:
+        sh: uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/'
+
+  dev:e2e:
+    desc: "Build image and run e2e tests"
+    vars:
+      watch: '{{.watch | default "platform"}}'
+    cmds:
+      - task: dev:img
+        vars:
+          watch: "{{.watch}}"
+      - go test -v ./test/e2e/... -count=1
+
+  generate-service:
+    desc: "Generate Platform Service with opencontrolplane-gen transformation"
+    vars:
+      dryrun: '{{.dryrun | default "false"}}'
+      api: '{{.api | default "Example"}}'
+      name: '{{.name | default "example"}}'
+      watch: '{{.watch | default "platform"}}'
+      module: '{{.module | default "github.com/openmcp-project/platform-service-example"}}'
+    env:
+      KIND: "{{ .api }}"
+      KIND_LOWER: "{{ lower .api }}"
+      SERVICE_NAME: "{{ lower .name }}"
+      WATCH: "{{ lower .watch }}"
+      CMD_FOLDER: "platform-service-{{ lower .name }}"
+      MODULE: "{{ .module }}"
+    cmds:
+      - DRY_RUN={{.dryrun}} go generate ./...
+      - cmd: mv ./cmd/cluster-provider-template ./cmd/${CMD_FOLDER}
+        if: '{{ eq .dryrun "false" }}'
+      - cmd: go mod edit -module {{.module}}
+        if: '{{ eq .dryrun "false" }}'
+      - cmd: sed -i '' 's/cluster-provider-template/platform-service-{{.name}}/g' Taskfile.yaml
+        if: '{{ eq .dryrun "false" }}'
