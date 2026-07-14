@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/openmcp-project/openmcp-operator/api/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -30,6 +31,15 @@ type ProviderConfigSpec struct {
 	// Important: Run "task generate" to regenerate code after modifying this file
 	// The following markers will use OpenAPI v3 schema to validate the value
 	// More info: https://book.kubebuilder.io/reference/markers/crd-validation.html
+}
+
+type ProviderConfigStatus struct {
+	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+
+	// For Kubernetes API conventions, see:
+	// https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+	common.Status `json:",inline"`
 }
 
 // ProviderConfig is the Schema for the providerconfigs API
@@ -46,7 +56,10 @@ type ProviderConfig struct {
 
 	// spec defines the desired state of ProviderConfig
 	// +required
-	Spec ProviderConfigSpec `json:"spec"`
+	Spec   ProviderConfigSpec   `json:"spec"`
+	// status defines the observed state of ProviderConfig
+	// +optional
+	Status ProviderConfigStatus `json:"status,omitempty,omitzero"`
 }
 
 // +kubebuilder:object:root=true

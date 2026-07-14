@@ -255,7 +255,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 	}
 
 	// opencontrolplane-gen:replace Foo=KIND
-	if err := controller.NewFooReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
+	if err := controller.NewProviderConfigReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
 		// opencontrolplane-gen:replace Foo=KIND
 		return fmt.Errorf("unable to add FooReconciler to manager: %w", err)
 	}

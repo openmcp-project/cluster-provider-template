@@ -30,7 +30,7 @@ import (
 var (
 	// GroupVersion is group version used to register these objects.
 	// opencontrolplane-gen:replace foo=KIND_LOWER
-	GroupVersion = schema.GroupVersion{Group: "foo.platform.open-control-plane.io", Version: "v1alpha1"}
+	GroupVersion = schema.GroupVersion{Group: "foo.cluster.open-control-plane.io", Version: "v1alpha1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme.
 	SchemeBuilder = runtime.NewSchemeBuilder(func(s *runtime.Scheme) error {

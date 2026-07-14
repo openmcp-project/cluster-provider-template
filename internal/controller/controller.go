@@ -6,46 +6,37 @@ import (
 	"fmt"
 
 	"github.com/openmcp-project/controller-utils/pkg/clusters"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/api/v1alpha1"
 
 	ctrlutils "github.com/openmcp-project/controller-utils/pkg/controller"
 	apiconst "github.com/openmcp-project/openmcp-operator/api/constants"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// opencontrolplane-gen:replace Foo=KIND
-type FooReconciler struct {
+type ProviderConfigReconciler struct {
 	platformCluster *clusters.Cluster
 	providerName    string
 }
 
-// opencontrolplane-gen:replace Foo=KIND
-func NewFooReconciler(platformCluster *clusters.Cluster, providerName string) *FooReconciler {
-	// opencontrolplane-gen:replace Foo=KIND
-	return &FooReconciler{
+func NewProviderConfigReconciler(platformCluster *clusters.Cluster, providerName string) *ProviderConfigReconciler {
+	return &ProviderConfigReconciler{
 		platformCluster: platformCluster,
 		providerName:    providerName,
 	}
 }
 
-// opencontrolplane-gen:replace Foo=KIND
-func (r *FooReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
+func (r *ProviderConfigReconciler) Reconcile(ctx context.Context, req reconcile.Request) (reconcile.Result, error) {
 	log := logf.FromContext(ctx)
 	// 1. get obj
-	// opencontrolplane-gen:replace Foo=KIND
-	obj := &v1alpha1.Foo{}
+	obj := &v1alpha1.ProviderConfig{}
 	if err := r.platformCluster.Client().Get(ctx, req.NamespacedName, obj); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
@@ -65,67 +56,27 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 			}
 		}
 	}
-	// 2. get config
-	config := &v1alpha1.ProviderConfig{}
-	if err := r.platformCluster.Client().Get(ctx, types.NamespacedName{Name: r.providerName}, config); err != nil {
-		if apierrors.IsNotFound(err) {
-			log.Info("No config found", "name", r.providerName)
-		}
-		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
-	// 3. TODO: reconcile obj and report status
+	// 2. TODO: reconcile obj and report status
 	if len(obj.Status.Conditions) == 0 {
 		meta.SetStatusCondition(&obj.Status.Conditions, metav1.Condition{
-			Type:   "Ready",
-			Status: metav1.ConditionTrue,
-			Reason: "ReconcileSuccess",
-			// opencontrolplane-gen:replace Foo=KIND
-			Message: "Foo is ready",
+			Type:    "Ready",
+			Status:  metav1.ConditionTrue,
+			Reason:  "ReconcileSuccess",
+			Message: "ProviderConfig is ready",
 		})
 		obj.Status.ObservedGeneration = obj.GetGeneration()
 		obj.Status.Phase = "Ready"
 	}
 	if err := r.platformCluster.Client().Status().Update(ctx, obj); err != nil {
-		// opencontrolplane-gen:replace Foo=KIND
-		log.Error(err, "Failed to update Foo status")
+		log.Error(err, "Failed to update ProviderConfig status")
 		return ctrl.Result{}, err
 	}
 	return reconcile.Result{}, nil
 }
 
-// opencontrolplane-gen:replace Foo=KIND
-func (r *FooReconciler) SetupWithManager(mgr manager.Manager) error {
+func (r *ProviderConfigReconciler) SetupWithManager(mgr manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// opencontrolplane-gen:replace Foo=KIND
-		For(&v1alpha1.Foo{}).
-		WatchesRawSource(source.Kind(
-			r.platformCluster.Cluster().GetCache(),
-			&v1alpha1.ProviderConfig{},
-			handler.TypedEnqueueRequestsFromMapFunc(r.enqueueAll()),
-			ctrlutils.ToTypedPredicate[*v1alpha1.ProviderConfig](ctrlutils.ExactNamePredicate(r.providerName, "")),
-		)).
+		For(&v1alpha1.ProviderConfig{}).
 		Named(r.providerName).
 		Complete(r)
-}
-
-// opencontrolplane-gen:replace Foo=KIND
-// create a reconcile.Request for every existing Foo object on provider config changes.
-// opencontrolplane-gen:replace Foo=KIND
-func (r *FooReconciler) enqueueAll() func(ctx context.Context, _ *v1alpha1.ProviderConfig) []reconcile.Request {
-	return func(ctx context.Context, _ *v1alpha1.ProviderConfig) []reconcile.Request {
-		// opencontrolplane-gen:replace Foo=KIND
-		list := &v1alpha1.FooList{}
-		if err := r.platformCluster.Client().List(ctx, list); err != nil {
-			// opencontrolplane-gen:replace foo=KIND
-			logf.FromContext(ctx).Error(err, "failed to list Foo objects")
-			return nil
-		}
-		reqs := make([]reconcile.Request, 0, len(list.Items))
-		for _, obj := range list.Items {
-			reqs = append(reqs, reconcile.Request{
-				NamespacedName: client.ObjectKeyFromObject(&obj),
-			})
-		}
-		return reqs
-	}
 }
