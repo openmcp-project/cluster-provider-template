@@ -30,8 +30,6 @@ tasks:
 
   test-e2e:
     desc: "Build image and run e2e tests"
-    vars:
-      watch: '{{.watch | default "platform"}}'
     cmds:
       - task: build:img:build-test
       - go test -v ./test/e2e/... -count=1

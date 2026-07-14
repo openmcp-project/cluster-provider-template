@@ -10,13 +10,11 @@ tasks:
     desc: "Execute the template for local development"
     vars:
       debug: '{{.debug | default "false"}}'
-      watch: '{{.watch | default "platform"}}'
     env:
       DEBUG: "{{ .debug }}"
       KIND: "Example"
       KIND_LOWER: "example"
       SERVICE_NAME: "example"
-      WATCH: "{{ lower .watch }}"
     cmds:
       - go generate ./...
 
@@ -24,8 +22,6 @@ tasks:
     desc: "Build image for current platform and tag for testing"
     cmds:
       - task: dev:gen
-        vars:
-          watch: "{{.watch}}"
       - task: build:img:build
       - docker tag ghcr.io/openmcp-project/images/{{.COMPONENTS}}:{{.VERSION}}-linux-{{ARCH}} ghcr.io/openmcp-project/images/cluster-provider-example:{{.VERSION}}
     vars:
@@ -36,12 +32,8 @@ tasks:
 
   dev:e2e:
     desc: "Build image and run e2e tests"
-    vars:
-      watch: '{{.watch | default "platform"}}'
     cmds:
       - task: dev:img
-        vars:
-          watch: "{{.watch}}"
       - go test -v ./test/e2e/... -count=1
 
   generate-service:
@@ -50,13 +42,11 @@ tasks:
       dryrun: '{{.dryrun | default "false"}}'
       api: '{{.api | default "Example"}}'
       name: '{{.name | default "example"}}'
-      watch: '{{.watch | default "platform"}}'
       module: '{{.module | default "github.com/openmcp-project/cluster-provider-example"}}'
     env:
       KIND: "{{ .api }}"
       KIND_LOWER: "{{ lower .api }}"
       SERVICE_NAME: "{{ lower .name }}"
-      WATCH: "{{ lower .watch }}"
       CMD_FOLDER: "platform-service-{{ lower .name }}"
       MODULE: "{{ .module }}"
     cmds:

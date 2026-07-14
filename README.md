@@ -31,7 +31,7 @@ The following sections give a brief overview of the template specific tasks.
 To generate a new Platform Service, use `task template:generate-service`:
 
 ```shell
-task template:generate-service name=foo api=Foo watch=platform module=github.com/yourorg/platform-service-foo
+task template:generate-service name=foo api=Foo module=github.com/yourorg/platform-service-foo
 ```
 
 Add `dryrun=true` to print the result without applying the changes to disk.
@@ -41,7 +41,6 @@ Add `dryrun=true` to print the result without applying the changes to disk.
 - `dryrun`: Print in-memory result to stdout without altering any files (default false)
 - `name`: Name of the platform service (default "example")
 - `api`: Name of the API to create on the watched cluster (default "Example")
-- `watch`: The cluster to watch, allowed values are "platform" or "onboarding" (default "platform")
 - `module` The go module name of your platform service (default "github.com/openmcp-project/platform-service-example")
 
 ### Development tasks
@@ -54,7 +53,6 @@ The following tasks are useful to test any template code changes.
 
 All `template:dev` tasks support the following arguments:
 
-- `watch`: defines where the platform service API is created. Supported values are "platform" and "onboarding" (default "platform")
 - `debug`: enables debug logs of [opencontrolplane-gen](https://github.com/openmcp-project/opencontrolplane-gen).
 
 ## Cluster Provider Runtime Flags

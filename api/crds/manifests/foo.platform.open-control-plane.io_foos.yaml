@@ -5,7 +5,7 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
   labels:
-    openmcp.cloud/cluster: onboarding
+    openmcp.cloud/cluster: platform
   name: foos.foo.platform.open-control-plane.io
 spec:
   group: foo.platform.open-control-plane.io
@@ -29,7 +29,6 @@ spec:
         description: |-
           opencontrolplane-gen:replace Foo=KIND
           Foo is the Schema for the Foo API
-          opencontrolplane-gen:replace onboarding=WATCH
           opencontrolplane-gen:replace Foo=KIND
         properties:
           apiVersion:

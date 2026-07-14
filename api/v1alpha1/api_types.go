@@ -54,8 +54,7 @@ type FooStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=`.status.phase`,name="Phase",type=string
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// opencontrolplane-gen:replace onboarding=WATCH
-// +kubebuilder:metadata:labels="openmcp.cloud/cluster=onboarding"
+// +kubebuilder:metadata:labels="openmcp.cloud/cluster=platform"
 // opencontrolplane-gen:replace Foo=KIND
 type Foo struct {
 	metav1.TypeMeta `json:",inline"`

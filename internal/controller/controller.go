@@ -27,18 +27,16 @@ import (
 
 // opencontrolplane-gen:replace Foo=KIND
 type FooReconciler struct {
-	platformCluster   *clusters.Cluster
-	onboardingCluster *clusters.Cluster
-	providerName      string
+	platformCluster *clusters.Cluster
+	providerName    string
 }
 
 // opencontrolplane-gen:replace Foo=KIND
-func NewFooReconciler(platformCluster, onboardingCluster *clusters.Cluster, providerName string) *FooReconciler {
+func NewFooReconciler(platformCluster *clusters.Cluster, providerName string) *FooReconciler {
 	// opencontrolplane-gen:replace Foo=KIND
 	return &FooReconciler{
-		platformCluster:   platformCluster,
-		onboardingCluster: onboardingCluster,
-		providerName:      providerName,
+		platformCluster: platformCluster,
+		providerName:    providerName,
 	}
 }
 
@@ -48,16 +46,9 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	// 1. get obj
 	// opencontrolplane-gen:replace Foo=KIND
 	obj := &v1alpha1.Foo{}
-	// opencontrolplane-gen:if WATCH=onboarding
-	if err := r.onboardingCluster.Client().Get(ctx, req.NamespacedName, obj); err != nil {
-		return reconcile.Result{}, client.IgnoreNotFound(err)
-	}
-	// opencontrolplane-gen:fi
-	// opencontrolplane-gen:if WATCH=platform
 	if err := r.platformCluster.Client().Get(ctx, req.NamespacedName, obj); err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
-	// opencontrolplane-gen:fi
 	// handle operation annotation
 	if obj.GetAnnotations() != nil {
 		op, ok := obj.GetAnnotations()[apiconst.OperationAnnotation]
@@ -67,16 +58,9 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 				log.Info("Ignoring resource with operation annotation")
 				return reconcile.Result{}, nil
 			case apiconst.OperationAnnotationValueReconcile:
-				// opencontrolplane-gen:if WATCH=onboarding
-				if err := ctrlutils.EnsureAnnotation(ctx, r.onboardingCluster.Client(), obj, apiconst.OperationAnnotation, "", true, ctrlutils.DELETE); err != nil {
-					return reconcile.Result{}, fmt.Errorf("error removing operation annotation: %w", err)
-				}
-				// opencontrolplane-gen:fi
-				// opencontrolplane-gen:if WATCH=platform
 				if err := ctrlutils.EnsureAnnotation(ctx, r.platformCluster.Client(), obj, apiconst.OperationAnnotation, "", true, ctrlutils.DELETE); err != nil {
 					return reconcile.Result{}, fmt.Errorf("error removing operation annotation: %w", err)
 				}
-				// opencontrolplane-gen:fi
 				log.Info("Manual reconciliation triggered with operation annotation")
 			}
 		}
@@ -101,20 +85,11 @@ func (r *FooReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		obj.Status.ObservedGeneration = obj.GetGeneration()
 		obj.Status.Phase = "Ready"
 	}
-	// opencontrolplane-gen:if WATCH=platform
 	if err := r.platformCluster.Client().Status().Update(ctx, obj); err != nil {
 		// opencontrolplane-gen:replace Foo=KIND
 		log.Error(err, "Failed to update Foo status")
 		return ctrl.Result{}, err
 	}
-	// opencontrolplane-gen:fi
-	// opencontrolplane-gen:if WATCH=onboarding
-	if err := r.onboardingCluster.Client().Status().Update(ctx, obj); err != nil {
-		// opencontrolplane-gen:replace Foo=KIND
-		log.Error(err, "Failed to update Foo status")
-		return ctrl.Result{}, err
-	}
-	// opencontrolplane-gen:fi
 	return reconcile.Result{}, nil
 }
 
@@ -140,20 +115,11 @@ func (r *FooReconciler) enqueueAll() func(ctx context.Context, _ *v1alpha1.Provi
 	return func(ctx context.Context, _ *v1alpha1.ProviderConfig) []reconcile.Request {
 		// opencontrolplane-gen:replace Foo=KIND
 		list := &v1alpha1.FooList{}
-		// opencontrolplane-gen:if WATCH=platform
 		if err := r.platformCluster.Client().List(ctx, list); err != nil {
 			// opencontrolplane-gen:replace foo=KIND
 			logf.FromContext(ctx).Error(err, "failed to list Foo objects")
 			return nil
 		}
-		// opencontrolplane-gen:fi
-		// opencontrolplane-gen:if WATCH=onboarding
-		if err := r.platformCluster.Client().List(ctx, list); err != nil {
-			// opencontrolplane-gen:replace foo=KIND
-			logf.FromContext(ctx).Error(err, "failed to list Foo objects")
-			return nil
-		}
-		// opencontrolplane-gen:fi
 		reqs := make([]reconcile.Request, 0, len(list.Items))
 		for _, obj := range list.Items {
 			reqs = append(reqs, reconcile.Request{

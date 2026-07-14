@@ -28,10 +28,3 @@ func InstallOperatorAPIsPlatform(scheme *runtime.Scheme) *runtime.Scheme {
 
 	return scheme
 }
-
-func InstallOperatorAPIsOnboarding(scheme *runtime.Scheme) *runtime.Scheme {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(v1alpha1.AddToScheme(scheme)) // required for fooservice resource
-
-	return scheme
-}

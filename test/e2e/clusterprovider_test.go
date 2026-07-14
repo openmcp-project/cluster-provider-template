@@ -12,9 +12,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	// opencontrolplane-gen:if WATCH=onboarding
-	"github.com/openmcp-project/openmcp-testing/pkg/clusterutils"
-	// opencontrolplane-gen:fi
 	openmcpconditions "github.com/openmcp-project/openmcp-testing/pkg/conditions"
 
 	"github.com/openmcp-project/openmcp-testing/pkg/resources"
@@ -37,47 +34,31 @@ func TestClusterProvider(t *testing.T) {
 		}).
 		Assess("verify service can be successfully consumed",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				config := c
-				// opencontrolplane-gen:if WATCH=onboarding
-				config, err := clusterutils.OnboardingConfig()
-				if err != nil {
-					t.Error(err)
-					return ctx
-				}
-				// opencontrolplane-gen:fi
-				v1alpha1.AddToScheme(config.Client().Resources().GetScheme())
+				v1alpha1.AddToScheme(c.Client().Resources().GetScheme())
 				// opencontrolplane-gen:replace Foo=KIND
 				api := &v1alpha1.Foo{}
 				api.SetName("test")
 				api.SetNamespace(metav1.NamespaceDefault)
-				if err := config.Client().Resources().Create(ctx, api); err != nil {
+				if err := c.Client().Resources().Create(ctx, api); err != nil {
 					// opencontrolplane-gen:replace Foo=KIND
 					t.Errorf("failed to create Foo object: %v", err)
 				}
-				if err := wait.For(openmcpconditions.Match(api, config, "Ready", corev1.ConditionTrue)); err != nil {
+				if err := wait.For(openmcpconditions.Match(api, c, "Ready", corev1.ConditionTrue)); err != nil {
 					t.Error(err)
 				}
 				return ctx
 			}).
 		Assess("verify service can be successfully deleted",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				config := c
-				// opencontrolplane-gen:if WATCH=onboarding
-				config, err := clusterutils.OnboardingConfig()
-				if err != nil {
-					t.Error(err)
-					return ctx
-				}
-				// opencontrolplane-gen:fi
-				v1alpha1.AddToScheme(config.Client().Resources().GetScheme())
+				v1alpha1.AddToScheme(c.Client().Resources().GetScheme())
 				// opencontrolplane-gen:replace Foo=KIND
 				apiList := &v1alpha1.FooList{}
-				if err := config.Client().Resources().List(ctx, apiList); err != nil {
+				if err := c.Client().Resources().List(ctx, apiList); err != nil {
 					t.Error(err)
 					return ctx
 				}
 				for _, obj := range apiList.Items {
-					if err := resources.DeleteObject(ctx, config, &obj, wait.WithTimeout(time.Minute)); err != nil {
+					if err := resources.DeleteObject(ctx, c, &obj, wait.WithTimeout(time.Minute)); err != nil {
 						// opencontrolplane-gen:replace Foo=KIND
 						t.Errorf("failed to delete Foo object: %v", err)
 					}

@@ -9,7 +9,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	crdutil "github.com/openmcp-project/controller-utils/pkg/crds"
@@ -78,13 +77,6 @@ func (o *InitOptions) Run(ctx context.Context) error {
 	log.Info("Environment", "value", o.Environment)
 	log.Info("ProviderName", "value", o.ProviderName)
 
-	// opencontrolplane-gen:if WATCH=onboarding
-	log.Info("Getting access to the onboarding cluster")
-	onboardingScheme := runtime.NewScheme()
-	providerscheme.InstallOperatorAPIsOnboarding(onboardingScheme)
-	providerscheme.InstallCRDAPIs(onboardingScheme)
-	// opencontrolplane-gen:fi
-
 	providerSystemNamespace := os.Getenv(openmcpconst.EnvVariablePodNamespace)
 	if providerSystemNamespace == "" {
 		return fmt.Errorf("environment variable %s is not set", openmcpconst.EnvVariablePodNamespace)
@@ -95,32 +87,10 @@ func (o *InitOptions) Run(ctx context.Context) error {
 		WithInterval(10 * time.Second).
 		WithTimeout(30 * time.Minute)
 
-	// opencontrolplane-gen:if WATCH=onboarding
-	onboardingCluster, err := clusterAccessManager.CreateAndWaitForCluster(ctx, clustersv1alpha1.PURPOSE_ONBOARDING+"-init", clustersv1alpha1.PURPOSE_ONBOARDING,
-		onboardingScheme, []clustersv1alpha1.PermissionsRequest{
-			{
-				Rules: []rbacv1.PolicyRule{
-					{
-						APIGroups: []string{"apiextensions.k8s.io"},
-						Resources: []string{"customresourcedefinitions"},
-						Verbs:     []string{"*"},
-					},
-				},
-			},
-		})
-
-	if err != nil {
-		return fmt.Errorf("error creating/updating onboarding cluster: %w", err)
-	}
-	// opencontrolplane-gen:fi
-
 	// apply CRDs
 	log.Info("Creating/updating CRDs")
 	crdManager := crdutil.NewCRDManager(openmcpconst.ClusterLabel, crds.CRDs)
 	crdManager.AddCRDLabelToClusterMapping(clustersv1alpha1.PURPOSE_PLATFORM, o.PlatformCluster)
-	// opencontrolplane-gen:if WATCH=onboarding
-	crdManager.AddCRDLabelToClusterMapping(clustersv1alpha1.PURPOSE_ONBOARDING, onboardingCluster)
-	// opencontrolplane-gen:fi
 	if err := crdManager.CreateOrUpdateCRDs(ctx, &log); err != nil {
 		return fmt.Errorf("error creating/updating CRDs: %w", err)
 	}
