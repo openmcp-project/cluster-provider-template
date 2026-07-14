@@ -56,7 +56,7 @@ type ProviderConfig struct {
 
 	// spec defines the desired state of ProviderConfig
 	// +required
-	Spec   ProviderConfigSpec   `json:"spec"`
+	Spec ProviderConfigSpec `json:"spec"`
 	// status defines the observed state of ProviderConfig
 	// +optional
 	Status ProviderConfigStatus `json:"status,omitempty,omitzero"`
