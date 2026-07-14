@@ -27,7 +27,7 @@ tasks:
         vars:
           watch: "{{.watch}}"
       - task: build:img:build
-      - docker tag ghcr.io/openmcp-project/images/{{.COMPONENTS}}:{{.VERSION}}-linux-{{ARCH}} ghcr.io/openmcp-project/images/platform-service-example:{{.VERSION}}
+      - docker tag ghcr.io/openmcp-project/images/{{.COMPONENTS}}:{{.VERSION}}-linux-{{ARCH}} ghcr.io/openmcp-project/images/cluster-provider-example:{{.VERSION}}
     vars:
       VERSION:
         sh: $COMMON_SCRIPT_DIR/get-version.sh
@@ -51,7 +51,7 @@ tasks:
       api: '{{.api | default "Example"}}'
       name: '{{.name | default "example"}}'
       watch: '{{.watch | default "platform"}}'
-      module: '{{.module | default "github.com/openmcp-project/platform-service-example"}}'
+      module: '{{.module | default "github.com/openmcp-project/cluster-provider-example"}}'
     env:
       KIND: "{{ .api }}"
       KIND_LOWER: "{{ lower .api }}"
@@ -65,5 +65,5 @@ tasks:
         if: '{{ eq .dryrun "false" }}'
       - cmd: go mod edit -module {{.module}}
         if: '{{ eq .dryrun "false" }}'
-      - cmd: sed -i '' 's/cluster-provider-template/platform-service-{{.name}}/g' Taskfile.yaml
+      - cmd: sed -i '' 's/cluster-provider-template/cluster-provider-{{.name}}/g' Taskfile.yaml
         if: '{{ eq .dryrun "false" }}'
