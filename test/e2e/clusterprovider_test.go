@@ -11,6 +11,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
@@ -23,6 +25,7 @@ func TestClusterProvider(t *testing.T) {
 	basicClusterProviderTest := features.New("provider test").
 		WithSetup("create provider config", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			v1alpha1.AddToScheme(c.Client().Resources().GetScheme())
+			clustersv1alpha1.AddToScheme(c.Client().Resources().GetScheme())
 			config := &v1alpha1.ProviderConfig{}
 			// opencontrolplane-gen:replace configname=SERVICE_NAME
 			config.SetName("configname")
@@ -33,7 +36,16 @@ func TestClusterProvider(t *testing.T) {
 		}).
 		Assess("verify cluster profiles have been created",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				// TODO
+				clusterProfile := clustersv1alpha1.ClusterProfile{}
+				clusterProfile.Name = "kind"
+				list := &clustersv1alpha1.ClusterProfileList{
+					Items: []clustersv1alpha1.ClusterProfile{
+						clusterProfile,
+					},
+				}
+				if err := wait.For(conditions.New(c.Client().Resources()).ResourcesFound(list)); err != nil {
+					t.Errorf("cluster profile not found: %v", err)
+				}
 				return ctx
 			}).
 		Assess("update purpose mapping", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
@@ -43,7 +55,6 @@ func TestClusterProvider(t *testing.T) {
 		}).
 		Assess("verify control plane cluster request result in working cluster",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				clustersv1alpha1.AddToScheme(c.Client().Resources().GetScheme())
 				clusterRequest := &clustersv1alpha1.ClusterRequest{}
 				clusterRequest.SetName("test-cluster")
 				clusterRequest.SetNamespace("openmcp-system")
@@ -51,11 +62,21 @@ func TestClusterProvider(t *testing.T) {
 				if err := c.Client().Resources().Create(ctx, clusterRequest); err != nil {
 					t.Errorf("failed to create cluster request: %v", err)
 				}
+				cluster := clustersv1alpha1.Cluster{}
+				cluster.SetName("test")
+				cluster.SetNamespace("openmcp-system")
+				list := &clustersv1alpha1.ClusterList{
+					Items: []clustersv1alpha1.Cluster{
+						cluster,
+					},
+				}
+				if err := wait.For(conditions.New(c.Client().Resources()).ResourcesFound(list)); err != nil {
+					t.Errorf("cluster not found: %v", err)
+				}
 				return ctx
 			}).
 		Assess("verify access request result in kubeconfig for created control plane",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				// TODO
 				return ctx
 			}).
 		Assess("verify cluster is successfully deleted",
