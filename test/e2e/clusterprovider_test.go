@@ -25,6 +25,8 @@ import (
 	"github.com/openmcp-project/openmcp-testing/pkg/providers"
 )
 
+const openmcpSystem = "openmcp-system"
+
 func TestClusterProvider(t *testing.T) {
 	basicClusterProviderTest := features.New("provider test").
 		WithSetup("create provider config", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
@@ -55,14 +57,14 @@ func TestClusterProvider(t *testing.T) {
 			}).
 		Assess("update cluster scheduler purpose mapping", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 			// TODO: replace with a profile that maps to your cluster provider
-			addProfileToOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", "openmcp-system", "kind")
+			addProfileToOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", openmcpSystem, "kind")
 			return ctx
 		}).
 		Assess("verify control plane cluster request result in working cluster",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				clusterRequest := &clustersv1alpha1.ClusterRequest{}
 				clusterRequest.SetName("test-cluster")
-				clusterRequest.SetNamespace("openmcp-system")
+				clusterRequest.SetNamespace(openmcpSystem)
 				clusterRequest.Spec.Purpose = "test"
 				if err := c.Client().Resources().Create(ctx, clusterRequest); err != nil {
 					t.Errorf("failed to create cluster request: %v", err)
@@ -70,7 +72,7 @@ func TestClusterProvider(t *testing.T) {
 				}
 				cluster := &clustersv1alpha1.Cluster{}
 				cluster.SetName("test")
-				cluster.SetNamespace("openmcp-system")
+				cluster.SetNamespace(openmcpSystem)
 				if err := wait.For(openmcpconditions.Match(cluster, c, "Ready", corev1.ConditionTrue)); err != nil {
 					t.Errorf("cluster is not ready")
 				}
@@ -80,10 +82,10 @@ func TestClusterProvider(t *testing.T) {
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				accessRequest := &clustersv1alpha1.AccessRequest{}
 				accessRequest.SetName("test")
-				accessRequest.SetNamespace("openmcp-system")
+				accessRequest.SetNamespace(openmcpSystem)
 				accessRequest.Spec.ClusterRef = &common.ObjectReference{
 					Name:      "test",
-					Namespace: "openmcp-system",
+					Namespace: openmcpSystem,
 				}
 				accessRequest.Spec.Token = &clustersv1alpha1.TokenConfig{
 					RoleRefs: []common.RoleRef{
@@ -104,7 +106,7 @@ func TestClusterProvider(t *testing.T) {
 			}).
 		Assess("verify cluster is successfully deleted",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				if err := providers.DeleteCluster(ctx, c, types.NamespacedName{Namespace: "openmcp-system", Name: "test"}); err != nil {
+				if err := providers.DeleteCluster(ctx, c, types.NamespacedName{Namespace: openmcpSystem, Name: "test"}); err != nil {
 					t.Errorf("delete cluster failed: %v", err)
 				}
 				return ctx
