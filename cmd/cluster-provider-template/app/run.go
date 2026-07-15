@@ -28,7 +28,7 @@ import (
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
-	"github.com/openmcp-project/cluster-provider-template/internal/controller"
+	"github.com/openmcp-project/cluster-provider-template/internal/controller/config"
 )
 
 var setupLog logging.Logger
@@ -255,7 +255,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 	}
 
 	// opencontrolplane-gen:replace Foo=KIND
-	if err := controller.NewProviderConfigReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
+	if err := config.NewProviderConfigReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
 		// opencontrolplane-gen:replace Foo=KIND
 		return fmt.Errorf("unable to add FooReconciler to manager: %w", err)
 	}

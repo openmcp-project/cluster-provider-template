@@ -1,5 +1,5 @@
 //go:generate opencontrolplane-gen
-package controller
+package config 
 
 import (
 	"context"
