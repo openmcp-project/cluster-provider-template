@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -19,6 +20,9 @@ import (
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/api/v1alpha1"
 	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
+	"github.com/openmcp-project/openmcp-operator/api/common"
+	openmcpconditions "github.com/openmcp-project/openmcp-testing/pkg/conditions"
+	"github.com/openmcp-project/openmcp-testing/pkg/providers"
 )
 
 func TestClusterProvider(t *testing.T) {
@@ -37,6 +41,7 @@ func TestClusterProvider(t *testing.T) {
 		Assess("verify cluster profiles have been created",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
 				clusterProfile := clustersv1alpha1.ClusterProfile{}
+				// TODO replace with a cluster profile created by your cluster provided
 				clusterProfile.Name = "kind"
 				list := &clustersv1alpha1.ClusterProfileList{
 					Items: []clustersv1alpha1.ClusterProfile{
@@ -48,9 +53,9 @@ func TestClusterProvider(t *testing.T) {
 				}
 				return ctx
 			}).
-		Assess("update purpose mapping", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			// TODO: replace kind with a profile name that maps to your cluster provider
-			updateOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", "openmcp-system", "kind")
+		Assess("update cluster scheduler purpose mapping", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+			// TODO: replace with a profile that maps to your cluster provider
+			addProfileToOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", "openmcp-system", "kind")
 			return ctx
 		}).
 		Assess("verify control plane cluster request result in working cluster",
@@ -61,33 +66,53 @@ func TestClusterProvider(t *testing.T) {
 				clusterRequest.Spec.Purpose = "test"
 				if err := c.Client().Resources().Create(ctx, clusterRequest); err != nil {
 					t.Errorf("failed to create cluster request: %v", err)
+					return ctx
 				}
-				cluster := clustersv1alpha1.Cluster{}
+				cluster := &clustersv1alpha1.Cluster{}
 				cluster.SetName("test")
 				cluster.SetNamespace("openmcp-system")
-				list := &clustersv1alpha1.ClusterList{
-					Items: []clustersv1alpha1.Cluster{
-						cluster,
-					},
-				}
-				if err := wait.For(conditions.New(c.Client().Resources()).ResourcesFound(list)); err != nil {
-					t.Errorf("cluster not found: %v", err)
+				if err := wait.For(openmcpconditions.Match(cluster, c, "Ready", corev1.ConditionTrue)); err != nil {
+					t.Errorf("cluster is not ready")
 				}
 				return ctx
 			}).
 		Assess("verify access request result in kubeconfig for created control plane",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
+				accessRequest := &clustersv1alpha1.AccessRequest{}
+				accessRequest.SetName("test")
+				accessRequest.SetNamespace("openmcp-system")
+				accessRequest.Spec.ClusterRef = &common.ObjectReference{
+					Name:      "test",
+					Namespace: "openmcp-system",
+				}
+				accessRequest.Spec.Token = &clustersv1alpha1.TokenConfig{
+					RoleRefs: []common.RoleRef{
+						{
+							Name: "cluster-admin",
+							Kind: "ClusterRole",
+						},
+					},
+				}
+				if err := c.Client().Resources().Create(ctx, accessRequest); err != nil {
+					t.Errorf("failed to created access request: %v", err)
+					return ctx
+				}
+				if err := wait.For(openmcpconditions.Match(accessRequest, c, "Ready", corev1.ConditionTrue)); err != nil {
+					t.Errorf("access request is not ready")
+				}
 				return ctx
 			}).
 		Assess("verify cluster is successfully deleted",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				// TODO
+				if err := providers.DeleteCluster(ctx, c, types.NamespacedName{Namespace: "openmcp-system", Name: "test"}); err != nil {
+					t.Errorf("delete cluster failed: %v", err)
+				}
 				return ctx
 			})
 	testenv.Test(t, basicClusterProviderTest.Feature())
 }
 
-func updateOpenMCPOperatorConfig(ctx context.Context, c klient.Client, name, namespace, profileName string) error {
+func addProfileToOpenMCPOperatorConfig(ctx context.Context, c klient.Client, name, namespace, profileName string) error {
 	cm := &corev1.ConfigMap{}
 	if err := c.Resources().Get(ctx, name, namespace, cm); err != nil {
 		return fmt.Errorf("failed to fetch ConfigMap %s/%s: %w", namespace, name, err)
