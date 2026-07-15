@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"text/template"
 
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/klient"
@@ -15,6 +16,7 @@ import (
 
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/api/v1alpha1"
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 )
 
 func TestClusterProvider(t *testing.T) {
@@ -25,7 +27,7 @@ func TestClusterProvider(t *testing.T) {
 			// opencontrolplane-gen:replace configname=SERVICE_NAME
 			config.SetName("configname")
 			if err := c.Client().Resources().Create(ctx, config); err != nil {
-				t.Errorf("failed to create ProviderConfig object: %v", err)
+				t.Errorf("failed to create ProviderConfig: %v", err)
 			}
 			return ctx
 		}).
@@ -35,13 +37,20 @@ func TestClusterProvider(t *testing.T) {
 				return ctx
 			}).
 		Assess("update purpose mapping", func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-			// replace test with actual profile name
-			updateOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", "openmcp-system", "test")
+			// TODO: replace kind with a profile name that maps to your cluster provider
+			updateOpenMCPOperatorConfig(ctx, c.Client(), "openmcp-operator", "openmcp-system", "kind")
 			return ctx
 		}).
 		Assess("verify control plane cluster request result in working cluster",
 			func(ctx context.Context, t *testing.T, c *envconf.Config) context.Context {
-				// TODO
+				clustersv1alpha1.AddToScheme(c.Client().Resources().GetScheme())
+				clusterRequest := &clustersv1alpha1.ClusterRequest{}
+				clusterRequest.SetName("test-cluster")
+				clusterRequest.SetNamespace("openmcp-system")
+				clusterRequest.Spec.Purpose = "test"
+				if err := c.Client().Resources().Create(ctx, clusterRequest); err != nil {
+					t.Errorf("failed to create cluster request: %v", err)
+				}
 				return ctx
 			}).
 		Assess("verify access request result in kubeconfig for created control plane",
@@ -62,9 +71,18 @@ func updateOpenMCPOperatorConfig(ctx context.Context, c klient.Client, name, nam
 	if err := c.Resources().Get(ctx, name, namespace, cm); err != nil {
 		return fmt.Errorf("failed to fetch ConfigMap %s/%s: %w", namespace, name, err)
 	}
-	if err := updateProfile("test", cm); err != nil {
-		return fmt.Errorf("failed to update profile in ConfigMap %s/%s: %w", namespace, name, err)
+	data, ok := cm.Data["config"]
+	if !ok {
+		return fmt.Errorf("config key does not exist")
 	}
+	data, err := addPurposeMapping(purposeMapping{
+		Purpose: "test",
+		Profile: profileName,
+	})
+	if err != nil {
+		return err
+	}
+	cm.Data["config"] = data
 	if err := c.Resources().Update(ctx, cm); err != nil {
 		return fmt.Errorf("failed to update ConfigMap %s/%s: %w", namespace, name, err)
 	}
@@ -79,12 +97,52 @@ func updateOpenMCPOperatorConfig(ctx context.Context, c klient.Client, name, nam
 	return nil
 }
 
-func updateProfile(profileName string, cm *corev1.ConfigMap) error {
-	data, ok := cm.Data["config"]
-	if !ok {
-		return fmt.Errorf("config key does not exist")
-	}
-	cm.Data["config"] = strings.Replace(data, "profile: kind", fmt.Sprintf("profile: %s", profileName), 1)
-	fmt.Println(cm.Data["config"])
-	return nil
+type purposeMapping struct {
+	Purpose string
+	Profile string
 }
+
+func addPurposeMapping(mapping purposeMapping) (string, error) {
+	tmpl, err := template.New("configTemplate").Parse(openmcpOperatorConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template: %w", err)
+	}
+	result := strings.Builder{}
+	if err := tmpl.Execute(&result, mapping); err != nil {
+		return "", fmt.Errorf("failed to execute template: %w", err)
+	}
+	return result.String(), nil
+}
+
+const openmcpOperatorConfig = `
+managedControlPlane:
+  mcpClusterPurpose: mcp
+scheduler:
+  scope: Cluster
+  purposeMappings:
+    mcp:
+      template:
+        spec:
+          profile: kind
+          tenancy: Exclusive
+    platform:
+      template:
+        spec:
+          profile: kind
+          tenancy: Shared
+    onboarding:
+      template:
+        spec:
+          profile: kind
+          tenancy: Shared
+    workload:
+      template:
+        spec:
+          profile: kind
+          tenancy: Shared
+    {{.Purpose}}:
+      template:
+        spec:
+          profile: {{.Profile}}
+          tenancy: Shared
+`
