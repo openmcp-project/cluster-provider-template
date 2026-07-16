@@ -77,6 +77,5 @@ func (r *ProviderConfigReconciler) Reconcile(ctx context.Context, req reconcile.
 func (r *ProviderConfigReconciler) SetupWithManager(mgr manager.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.ProviderConfig{}).
-		Named(r.providerName).
 		Complete(r)
 }

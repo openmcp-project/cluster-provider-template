@@ -28,6 +28,10 @@ import (
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
+	"github.com/openmcp-project/cluster-provider-template/internal/controller/accessrequest"
+	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
+	"github.com/openmcp-project/cluster-provider-template/internal/controller/cluster"
+	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/internal/controller/config"
 )
 
@@ -224,10 +228,9 @@ func (o *RunOptions) Run(ctx context.Context) error {
 	webhookServer := webhook.NewServer(webhook.Options{
 		TLSOpts: o.WebhookTLSOpts,
 	})
-	cluster := o.PlatformCluster //nolint:ineffassign,staticcheck
 
-	mgr, err := ctrl.NewManager(cluster.RESTConfig(), ctrl.Options{
-		Scheme:                 cluster.Scheme(),
+	mgr, err := ctrl.NewManager(o.PlatformCluster.RESTConfig(), ctrl.Options{
+		Scheme:                 o.PlatformCluster.Scheme(),
 		Metrics:                o.MetricsServerOptions,
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: o.ProbeAddr,
@@ -254,10 +257,14 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to add platform cluster to manager: %w", err)
 	}
 
-	// opencontrolplane-gen:replace Foo=KIND
 	if err := config.NewProviderConfigReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
-		// opencontrolplane-gen:replace Foo=KIND
-		return fmt.Errorf("unable to add FooReconciler to manager: %w", err)
+		return fmt.Errorf("unable to add ProviderConfigReconciler to manager: %w", err)
+	}
+	if err := accessrequest.NewAccessRequestReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to add AccessRequestReconciler to manager: %w", err)
+	}
+	if err := cluster.NewClusterReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
+		return fmt.Errorf("unable to add ProviderConfigReconciler to manager: %w", err)
 	}
 
 	if o.MetricsCertWatcher != nil {
