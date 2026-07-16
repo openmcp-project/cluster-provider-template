@@ -26,8 +26,6 @@ import (
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/api/providerscheme"
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
-
-	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/internal/controller/accessrequest"
 	// opencontrolplane-gen:replace github.com/openmcp-project/cluster-provider-template=MODULE
 	"github.com/openmcp-project/cluster-provider-template/internal/controller/cluster"
