@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/env"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 
+	clustersv1alpha1 "github.com/openmcp-project/openmcp-operator/api/clusters/v1alpha1"
 	"github.com/openmcp-project/openmcp-testing/pkg/providers"
 	"github.com/openmcp-project/openmcp-testing/pkg/setup"
 )
@@ -30,6 +31,14 @@ func TestMain(m *testing.M) {
 			Image:        "ghcr.io/openmcp-project/images/openmcp-operator:v1.1.0",
 			Environment:  "debug",
 			PlatformName: "platform",
+			// TODO replace with the cluster profile(s) to test your cluster provider
+			ExtraClusterPurposeMapping: []providers.ClusterPurposeMapping{
+				{
+					Purpose: "test",
+					Profile: "kind",
+					Tenancy: clustersv1alpha1.TENANCY_SHARED,
+				},
+			},
 		},
 		ClusterProviders: []providers.ClusterProviderSetup{
 			{
@@ -43,6 +52,10 @@ func TestMain(m *testing.M) {
 				// opencontrolplane-gen:replace template=SERVICE_NAME
 				Image:              fmt.Sprintf("ghcr.io/openmcp-project/images/cluster-provider-template:%s", version),
 				LoadImageToCluster: true,
+				// TODO (optional) use DeploymentSpec to override the default deployment spec that is used to deploy your cluster provider
+				// DeploymentSpec: &providerv1alpha1.DeploymentSpec{
+				// 	...
+				// },
 			},
 		},
 	}
