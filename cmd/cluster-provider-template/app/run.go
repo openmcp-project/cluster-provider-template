@@ -234,7 +234,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		HealthProbeBindAddress: o.ProbeAddr,
 		PprofBindAddress:       o.PprofAddr,
 		LeaderElection:         o.EnableLeaderElection,
-		// opencontrolplane-gen:replace foo=KIND_LOWER
+		// opencontrolplane-gen:replace foo=PROVIDER_NAME
 		LeaderElectionID: "github.com/openmcp-project/cluster-provider-foo",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
