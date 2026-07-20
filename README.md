@@ -13,9 +13,13 @@ A template for building @openmcp-project Cluster Providers.
 3. Use `task template:generate-provider` to create a new Cluster Provider.
 4. Test your Cluster Provider with `task test-e2e`.
 
-The template generates a basic Cluster Provider with a [Config](https://open-control-plane.io/developers/platformservice/design#config) and [API](https://open-control-plane.io/developers/platformservice/design#api) CRD.
+The template generates a basic Cluster Provider with the following 3 Controllers:
 
-For a detailed guide on setup and usage, please refer to the full [Platform Service Development Guide](https://open-control-plane.io/developers/platformservice/develop).
+- [accessrequest/controller.go](./internal/controller/accessrequest/controller.go): Reconcile `AccessRequest` resources that have been assigned to your Cluster Provider.
+- [cluster/controller.go](./internal/controller/cluster/controller.go): Reconcile `Cluster` resources that have been assigned to your Cluster Provider.
+- [config/controller.go](./internal/controller/config/controller.go): Create `ClusterProfile` resources based on the `ProviderConfig` of your Cluster Provider.
+
+For a detailed guide on setup and usage, please refer to the full [Cluster Provider Development Guide](https://open-control-plane.io/developers/clusterprovider/develop).
 
 ## Template Taskfiles
 
