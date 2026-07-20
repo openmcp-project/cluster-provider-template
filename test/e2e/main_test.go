@@ -47,9 +47,9 @@ func TestMain(m *testing.M) {
 				Image: "ghcr.io/openmcp-project/images/cluster-provider-kind:v0.4.2",
 			},
 			{
-				// opencontrolplane-gen:replace foo=SERVICE_NAME
+				// opencontrolplane-gen:replace foo=PROVIDER_NAME
 				Name: "foo",
-				// opencontrolplane-gen:replace template=SERVICE_NAME
+				// opencontrolplane-gen:replace template=PROVIDER_NAME
 				Image:              fmt.Sprintf("ghcr.io/openmcp-project/images/cluster-provider-template:%s", version),
 				LoadImageToCluster: true,
 				// TODO (optional) use DeploymentSpec to override the default deployment spec that is used to deploy your cluster provider

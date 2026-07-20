@@ -10,7 +10,7 @@ A template for building @openmcp-project Cluster Providers.
 
 1. Create a new repository based on this template.
 2. Install [opencontrolplane-gen](https://github.com/openmcp-project/opencontrolplane-gen).
-3. Use `task template:generate-service` to create a new Cluster Provider.
+3. Use `task template:generate-provider` to create a new Cluster Provider.
 4. Test your Cluster Provider with `task test-e2e`.
 
 The template generates a basic Cluster Provider with a [Config](https://open-control-plane.io/developers/platformservice/design#config) and [API](https://open-control-plane.io/developers/platformservice/design#api) CRD.
@@ -21,35 +21,34 @@ For a detailed guide on setup and usage, please refer to the full [Platform Serv
 
 This template contains two Taskfiles:
 
-- Taskfile.yaml contains the tasks to use once you created a Platform Service based on this template.
-- Taskfile_template.yaml contains the tasks to use while working with the template. This Taskfile can be removed once you used this template to create a Platform Service.
+- Taskfile.yaml contains the tasks to use once you created a Cluster Provider based on this template.
+- Taskfile_template.yaml contains the tasks to use while working with the template. This Taskfile can be removed once you used this template to create a Cluster Provider.
 
 The following sections give a brief overview of the template specific tasks.
 
 ### User tasks
 
-To generate a new Platform Service, use `task template:generate-service`:
+To generate a new Cluster Provider, use `task template:generate-provider`:
 
 ```shell
-task template:generate-service name=foo api=Foo module=github.com/yourorg/platform-service-foo
+task template:generate-provider name=foo module=github.com/yourorg/cluster-provider-foo
 ```
 
 Add `dryrun=true` to print the result without applying the changes to disk.
 
-`template:generate-service` supports the following arguments:
+`template:generate-provider` supports the following arguments:
 
 - `dryrun`: Print in-memory result to stdout without altering any files (default false)
-- `name`: Name of the platform service (default "example")
-- `api`: Name of the API to create on the watched cluster (default "Example")
-- `module` The go module name of your platform service (default "github.com/openmcp-project/platform-service-example")
+- `name`: Name of the Cluster Provider (default "example")
+- `module` The go module name of your Cluster Provider (default "github.com/openmcp-project/cluster-provider-example")
 
 ### Development tasks
 
 The following tasks are useful to test any template code changes.
 
-- `template:dev:gen`: Executes the template with the default values to render "platform-service-example" for local development.
-- `template:dev:img`: Builds a container image for "platform-service-example". This also includes code validating.
-- `template:dev:e2e`: Executes e2e tests for "platform-service-example".
+- `template:dev:gen`: Executes the template with the default values to render "cluster-provider-example" for local development.
+- `template:dev:img`: Builds a container image for "cluster-provider-example". This also includes code validating.
+- `template:dev:e2e`: Executes e2e tests for "cluster-provider-example".
 
 All `template:dev` tasks support the following arguments:
 

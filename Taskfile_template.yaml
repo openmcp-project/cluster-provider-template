@@ -12,9 +12,7 @@ tasks:
       debug: '{{.debug | default "false"}}'
     env:
       DEBUG: "{{ .debug }}"
-      KIND: "Example"
-      KIND_LOWER: "example"
-      SERVICE_NAME: "example"
+      PROVIDER_NAME: "example"
     cmds:
       - go generate ./...
 
@@ -36,18 +34,15 @@ tasks:
       - task: dev:img
       - go test -v ./test/e2e/... -count=1
 
-  generate-service:
+  generate-provider:
     desc: "Generate Platform Service with opencontrolplane-gen transformation"
     vars:
       dryrun: '{{.dryrun | default "false"}}'
-      api: '{{.api | default "Example"}}'
       name: '{{.name | default "example"}}'
       module: '{{.module | default "github.com/openmcp-project/cluster-provider-example"}}'
     env:
-      KIND: "{{ .api }}"
-      KIND_LOWER: "{{ lower .api }}"
-      SERVICE_NAME: "{{ lower .name }}"
-      CMD_FOLDER: "platform-service-{{ lower .name }}"
+      PROVIDER_NAME: "{{ lower .name }}"
+      CMD_FOLDER: "cluster-provider-{{ lower .name }}"
       MODULE: "{{ .module }}"
     cmds:
       - DRY_RUN={{.dryrun}} go generate ./...
