@@ -7,7 +7,7 @@ require (
 	github.com/openmcp-project/opencontrolplane-runtime v1.2.0
 	github.com/openmcp-project/openmcp-operator/api v1.3.0
 	github.com/openmcp-project/openmcp-operator/lib v1.3.0
-	github.com/openmcp-project/openmcp-testing v1.1.1-0.20260717145513-b717ed3add33
+	github.com/openmcp-project/openmcp-testing v1.2.0
 	github.com/spf13/cobra v1.10.2
 	k8s.io/api v0.36.2
 	k8s.io/apiextensions-apiserver v0.36.2
