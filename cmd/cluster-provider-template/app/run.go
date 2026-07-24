@@ -262,7 +262,7 @@ func (o *RunOptions) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to add AccessRequestReconciler to manager: %w", err)
 	}
 	if err := cluster.NewClusterReconciler(o.PlatformCluster, o.ProviderName).SetupWithManager(mgr); err != nil {
-		return fmt.Errorf("unable to add ProviderConfigReconciler to manager: %w", err)
+		return fmt.Errorf("unable to add ClusterReconciler to manager: %w", err)
 	}
 
 	if o.MetricsCertWatcher != nil {
